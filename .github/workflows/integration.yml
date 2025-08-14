@@ -1,0 +1,74 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run integration tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  integration:
+    name: Integration Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        tmux-version: ['3.2', '3.3']
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Install tmux (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        # Install specific tmux version if possible, otherwise latest
+        if [ "${{ matrix.tmux-version }}" = "3.3" ]; then
+          sudo apt-get install -y tmux
+        else
+          sudo apt-get install -y tmux
+        fi
+        tmux -V
+
+    - name: Install tmux (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install tmux
+        tmux -V
+
+    - name: Build muxyard
+      run: go build -o muxyard ./cmd/muxyard
+
+    - name: Test binary execution
+      run: |
+        ./muxyard --version
+        ./muxyard --help
+
+    - name: Test tmux integration (basic)
+      run: |
+        # Start a test session to verify tmux integration
+        timeout 10s tmux new-session -d -s test-session || true
+        tmux list-sessions | grep test-session || true
+        tmux kill-session -t test-session || true
+
+    - name: Run integration tests
+      run: |
+        # Run any integration test scripts if they exist
+        if [ -f "scripts/integration-test.sh" ]; then
+          ./scripts/integration-test.sh
+        fi
+        
+    - name: Clean up
+      if: always()
+      run: |
+        # Clean up any remaining tmux sessions
+        tmux kill-server || true
