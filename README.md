@@ -1,5 +1,7 @@
 # Muxyard - Tmux Session Manager
 
+> **DISCLAIMER**: This entire project was created exclusively using CLI AI agents. While I am using the project personally and have tested it thoroughly, I cannot guarantee its reliability or safety.
+
 A modern, interactive terminal UI for managing tmux sessions built with Go and Bubble Tea. Muxyard provides an intuitive interface for creating, listing, switching, and managing tmux sessions with support for session templates and Git repository integration.
 
 ## Features
